@@ -44,7 +44,7 @@ class NeatController(Controller):
     
     def get_score(self):
         min_distance = np.sqrt((self.start_x - self.target_x)**2 + (self.start_y - self.target_y)**2)
-        return self.score  -  abs(min_distance - self.total_distance)/abs(min_distance) + self.time_at_target
+        return self.score  #-  abs(min_distance - self.total_distance)/abs(min_distance)
         # return self.time_at_target
     
     def update_score(self, x, y):
@@ -56,7 +56,7 @@ class NeatController(Controller):
         if prev_dist < current_dist:
             self.score -= 1*abs(prev_dist - current_dist)
         
-        if current_dist < 10:
+        if current_dist < 2:
             self.time_at_target += 1
         
         self.steps += 1
@@ -251,11 +251,11 @@ def init_robot(network, light_sources):
 
 
     allowed_values = list(range(-30, 30))#list(range(-30, -27)) + list(range(27, 30))
-    x = random_in_interval(minimum=-10, maximum=10)#random.choice(allowed_values)
-    y = random_in_interval(minimum=-10, maximum=10)#random.choice(allowed_values)
+    x = random_in_interval(minimum=-20, maximum=20)#random.choice(allowed_values)
+    y = random_in_interval(minimum=-20, maximum=20)#random.choice(allowed_values)
     theta = random_in_interval(-np.pi/2, np.pi/2)  # at least one sensor should always have the light in view from here
 
-    controller = NeatController(x, y, network=network, gain=2)
+    controller = NeatController(x, y, network=network, gain=20)
     
     # construct the robot
     robot = Robot(x=x, y=y, theta=theta,
@@ -280,7 +280,11 @@ def eval_genomes(genomes, config):
 
     duration = random.randrange(50, 100)
     # duration = 50
-    disturb_times = [2, 10]#[random.randrange(1, 100)]
+    disturb_times = []
+    for i in range(random.randint(1, 4)):
+        disturb_times.append(random.randrange(1, 100))
+    disturb_times = sorted(disturb_times)
+
     light_sources = [LightSource(x=0, y=0, brightness=2)]
     robots = []
     disturbances = []
@@ -323,8 +327,8 @@ def run(config_file):
     p = neat.Population(config)
 
     global animate
-    animate = True 
-    p = neat.Checkpointer.restore_checkpoint('neat-checkpoint-11')
+    # animate = True 
+    # p = neat.Checkpointer.restore_checkpoint('neat-checkpoint-44')
 
     # Add a stdout reporter to show progress in the terminal.
     p.add_reporter(neat.StdOutReporter(True))
@@ -333,7 +337,7 @@ def run(config_file):
     p.add_reporter(neat.Checkpointer(50))
 
     # # Run for up to 300 generations.
-    winner = p.run(eval_genomes, 1)
+    winner = p.run(eval_genomes, 50)
 
     # # Display the winning genome.
     # print('\nBest genome:\n{!s}'.format(winner))

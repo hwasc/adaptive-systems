@@ -50,14 +50,18 @@ class NeatController(Controller):
     def update_score(self, x, y):
         prev_dist = (self.prev_x - self.target_x)**2 + (self.prev_y - self.target_y)**2
         current_dist = (x - self.target_x)**2 + (y - self.target_y)**2
-        if prev_dist > current_dist:
-            self.score += 1*abs(prev_dist - current_dist)
+        # if prev_dist > current_dist:
+        #     self.score += 1*abs(prev_dist - current_dist)
         
-        if prev_dist < current_dist:
-            self.score -= 1*abs(prev_dist - current_dist)
+        # if prev_dist < current_dist:
+        #     self.score -= 1*abs(prev_dist - current_dist)
         
-        if current_dist < 2:
-            self.time_at_target += 1
+        # if current_dist < 2:
+        #     self.time_at_target += 1
+        if np.sum(self.inputs[-1]) > np.sum(self.inputs[-2]):
+            self.score += 1
+        else:
+            self.score -= 1
         
         self.steps += 1
 
@@ -75,29 +79,35 @@ class NeatController(Controller):
         prev_output_left = np.array(self.left_speed_commands)[-2:]
         prev_output_right = np.array(self.right_speed_commands)[-2:]
 
-        input = np.array([input_left, input_right, prev_output_left, prev_output_right]).flatten()
+        # input = np.array([input_left, input_right, prev_output_left, prev_output_right]).flatten()
+        input = [np.sign((input_left[0] + input_right[0]) - (input_left[1] + input_right[1])),\
+                    np.sign(prev_output_left[0] - prev_output_left[1]),\
+                    np.sign(prev_output_right[0] - prev_output_right[1]),\
+        ]
         # print(input)
         output = self.network.activate(input)
 
         in_left = inputs[0]
-        in_right = inputs[1]
-
-        
+        in_right = inputs[1]        
 
         #swith inputs
         if output[0] > 0.5:
             in_left, in_right = in_right, in_left
+        
+        # print(output[0])
 
         #spin
         # if output[1] > 0.5:
-        if in_left < 0.001 and in_right < 0.001:
-            in_left = 1
-            in_right = -1
+        # if in_left < 0.001 and in_right < 0.001:
+        #     in_left = 1
+        #     in_right = -1
 
         # set left motor speed
         self.left_speed_command = self.gain * in_left
         # set right motor speed
         self.right_speed_command = self.gain * in_right
+
+        # print(in_left + in_right)
     
         return super().step(inputs, dt)
 
@@ -218,6 +228,7 @@ def run_sim_once(screen_width,
             # increment time variable and store in ts list for plotting later
             t += dt
             ts.append(t)
+            # print(t)
 
         # only run pygame code if animating the simulation
         if animate:
@@ -278,11 +289,11 @@ animate = False
 def eval_genomes(genomes, config):
     global animate
 
-    duration = random.randrange(50, 100)
+    duration = 50#random.randrange(50, 100)
     # duration = 50
-    disturb_times = []
-    for i in range(random.randint(1, 4)):
-        disturb_times.append(random.randrange(1, 100))
+    disturb_times = [25]
+    # for i in range(random.randint(1, 4)):
+    #     disturb_times.append(random.randrange(1, 100))
     disturb_times = sorted(disturb_times)
 
     light_sources = [LightSource(x=0, y=0, brightness=2)]
@@ -328,16 +339,16 @@ def run(config_file):
 
     global animate
     # animate = True 
-    # p = neat.Checkpointer.restore_checkpoint('neat-checkpoint-44')
+    p = neat.Checkpointer.restore_checkpoint('neat-checkpoint-9')
 
     # Add a stdout reporter to show progress in the terminal.
     p.add_reporter(neat.StdOutReporter(True))
     stats = neat.StatisticsReporter()
     p.add_reporter(stats)
-    p.add_reporter(neat.Checkpointer(50))
+    p.add_reporter(neat.Checkpointer(10))
 
     # # Run for up to 300 generations.
-    winner = p.run(eval_genomes, 50)
+    winner = p.run(eval_genomes, 10)
 
     # # Display the winning genome.
     # print('\nBest genome:\n{!s}'.format(winner))

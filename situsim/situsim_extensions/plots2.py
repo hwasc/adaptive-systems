@@ -109,3 +109,24 @@ def plot_all_robots_motors(all_ts, robots):
         ax[0].set_title('Left motor')
         ax[1].set_title('Right motor')
     fig.tight_layout()
+
+# plot a list of robots' actual parameters in vertically arranged subplots
+def plot_all_robots_parameters(all_ts, robots):
+    fig, ax = plt.subplots(2, 1)
+    for i, robot in enumerate(robots):
+        # ax[0].plot(all_ts[i], robot.controller.left_speed_commands, label='robot' + str(i))
+        # ax[1].plot(all_ts[i], robot.controller.right_speed_commands, label='robot' + str(i))
+        parameters = robot.controller.get_parameters()
+        ax[0].plot(all_ts[i], parameters[:, 0, 0], label='robot' + str(i) + ": left sensor gain", linewidth='2')
+        ax[0].plot(all_ts[i], parameters[:, 0, 1], label='robot' + str(i) + ": right sensor gain", linewidth='2')
+        ax[1].plot(all_ts[i], parameters[:, 1, 0], label='robot' + str(i) + ": left sensor gain", linewidth='2')
+        ax[1].plot(all_ts[i], parameters[:, 1, 1], label='robot' + str(i) + ": right sensor gain", linewidth='2')
+        ax[0].legend()
+        ax[1].legend()
+        ax[0].set_xlabel('Time')
+        ax[1].set_xlabel('Time')
+        ax[0].set_ylabel('Input Gain')
+        ax[1].set_ylabel('Input Gain')
+        ax[0].set_title('Left Gains')
+        ax[1].set_title('Right Gains')
+    fig.tight_layout()
